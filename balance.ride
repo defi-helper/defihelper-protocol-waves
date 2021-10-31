@@ -1,0 +1,133 @@
+{-# STDLIB_VERSION 5     #-}
+{-# SCRIPT_TYPE ACCOUNT  #-}
+{-# CONTENT_TYPE DAPP    #-}
+
+let oracle = Address(base58'3NCNRgdSsFaF8y8V1ghhGiU5KoSBMhQbzJg') 
+
+let SWOPgovernanceAdr = oracle.getString("swop_governance").valueOrErrorMessage("Empty key swop_governance").addressFromStringValue()
+let WavesUsdnPool = oracle.getString("WAVES_USDN_pool").valueOrElse("Empty key SWOP_governance_address").addressFromString().value()
+let consumers = oracle.getString("consumers").valueOrElse("Empty key consumer").split(",")
+let admin1 = oracle.getString("admin_1").valueOrElse("Empty key admin_1").addressFromStringValue()
+let admin2 = oracle.getString("admin_2").valueOrElse("Empty key admin_2").addressFromStringValue()
+let admin3 = oracle.getString("admin_3").valueOrElse("Empty key admin_3").addressFromStringValue()
+let feeInUSDN = oracle.getInteger("protocol_fee_in_usdn").valueOrErrorMessage("Empty protocol_fee_in_usdn")
+let isProtocolActive = oracle.getBoolean("is_protocol_active").valueOrErrorMessage("Empty key is_protocol_active")
+
+let keyBalance = "_balance"
+let keyFeeInUSDN = "fee_in_usdn"
+let keyIsDappActive = "is_dapp_active"
+let keyOverallBalance = "overall_balance"
+
+let isDappActive = this.getBoolean(keyIsDappActive).valueOrErrorMessage("Empty key is_dapp_active")
+let orverallBalance =  this.getInteger(keyOverallBalance).valueOrErrorMessage("Empty key overall_balance")
+let blockchainFee = 500000
+
+func getUserBalance(userStr: String) = {
+    let userBalance = match this.getInteger(userStr + keyBalance) {
+    case ub: Int => ub
+    case empty: Unit => 0
+    }
+    userBalance
+}
+
+func calcWavesProtocolFee () = {
+    let balanceUSDN = WavesUsdnPool.getInteger("B_asset_balance").valueOrErrorMessage("Empty B_asset_balance")
+    let balanceWAVES = WavesUsdnPool.getInteger("A_asset_balance").valueOrErrorMessage("Empty A_asset_balance")
+    let feeInWAVES = fraction(feeInUSDN,balanceWAVES,balanceUSDN) # fee in WAVES
+    feeInWAVES + blockchainFee
+}
+
+func isTransactionApproved(txStr: String) ={
+    let admin1Signed = if admin1.getBoolean(txStr).valueOrElse(false) then 1 else 0
+    let admin2Signed = if admin2.getBoolean(txStr).valueOrElse(false) then 1 else 0
+    let admin3Signed = if admin3.getBoolean(txStr).valueOrElse(false) then 1 else 0
+    admin1Signed + admin2Signed + admin3Signed >= 2
+}
+
+@Callable(i)
+func init()  = {
+    if this.getString("is_dapp_active").isDefined() || this.getInteger("overall_balance").isDefined() then throw("Already initialized")
+    else
+        [
+            IntegerEntry("overall_balance", 0),
+            BooleanEntry("is_dapp_active", true)
+        ]
+}
+
+@Callable(i)
+func updateAutomateStatus(automate: String, status: Boolean)  = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
+    if !consumers.containsElement(i.caller.bytes.toBase58String()) then
+        throw("Only admin can call this function")
+    else
+        [BooleanEntry(automate, status)]
+}
+
+@Callable(i)
+func extractFee(user: String, isFeeExtract: Boolean) = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
+    let isAutomateActive = this.getBoolean(i.caller.toString()).valueOrErrorMessage("Empty key i.caller: " + i.caller.toString())
+    if !isAutomateActive then
+        throw("This automate is inactive")
+    else
+        let protocolFee = if isFeeExtract then calcWavesProtocolFee() else 0
+        let userBalance = this.getInteger(user + keyBalance).valueOrErrorMessage("Empty key user + keyBalance: " + user + keyBalance)
+        let newUserBalance = userBalance - protocolFee
+        let newOrverallBalance = orverallBalance - protocolFee 
+        if newUserBalance < 0 then throw("Insufficient new balance:" + newUserBalance.toString() + " for user " + user) else
+        [
+            IntegerEntry(user + keyBalance, newUserBalance),
+            IntegerEntry(keyOverallBalance, newOrverallBalance)
+        ]
+}
+
+@Callable(i)
+func replenishBalance(userToReplenish: String) = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
+    let userToReplenishAddress = userToReplenish.addressFromString().valueOrErrorMessage("Argument must be base58 string")
+
+    let (pmtAmount, pmtAssetId) = (i.payments[0].amount, i.payments[0].assetId)
+    if pmtAssetId != unit then 
+        throw("Only WAVES available for replenishment") 
+    else
+        let userToReplenishBalance = getUserBalance(userToReplenish)
+        let newUserBalance = userToReplenishBalance + pmtAmount
+        let newOrverallBalance = orverallBalance + pmtAmount
+        [
+            IntegerEntry(userToReplenishAddress.bytes.toBase58String() + keyBalance, newUserBalance),
+            IntegerEntry(keyOverallBalance, newOrverallBalance)
+        ]
+}
+
+@Callable(i)
+func withdraw(withdrawAmt: Int) = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
+        let callerStr = i.caller.toString()
+        let callerBalance = getUserBalance(callerStr)
+        let newCallerBalance = callerBalance - withdrawAmt
+        let newOrverallBalance = orverallBalance - withdrawAmt
+        if withdrawAmt > callerBalance then throw("withdrawAmt > callerBalance") else
+        [
+            IntegerEntry(callerStr + keyBalance, newCallerBalance),
+            IntegerEntry(keyOverallBalance, newOrverallBalance),
+            ScriptTransfer(i.caller, withdrawAmt, unit)        ]
+}
+
+@Callable(i)
+func incomeProtocolWithdraw(addresForSendingIncome : String) = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
+    if !isTransactionApproved(i.transactionId.toBase58String()) then throw("Transaction id not approved by admins") else 
+    let income = this.wavesBalance().available - orverallBalance
+    if income <= 0 then throw("income <= 0 ") else
+    [
+        ScriptTransfer(addresForSendingIncome.addressFromStringValue(), income, unit)
+    ]
+}
+
+@Callable(i)
+func shutdownDapp() = if !isDappActive then throw("Protol stopped by admin") else {
+    if ![admin1, admin2, admin3].containsElement(i.caller) && !consumers.containsElement(i.caller.bytes.toBase58String()) then
+        throw("Only admin can call this function")
+    else
+        [BooleanEntry("is_dapp_active", false)]
+}
+
+@Verifier(tx)
+func verify() = {
+    if !isTransactionApproved(tx.id.toBase58String()) then throw("Transaction id not approved by admins") else true
+}
