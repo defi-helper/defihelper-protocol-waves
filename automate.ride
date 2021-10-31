@@ -111,7 +111,7 @@ func governanceWithdraw(amtToWithdraw:Int)  =  if !(isProtocolActive && isDappAc
 
 @Callable(i)
 func shutdownDapp() = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
-    if ![admin1, admin2, admin3].containsElement(i.caller) && !consumers.containsElement(i.caller.bytes.toBase58String()) then
+    if ![admin1, admin2, admin3, owner].containsElement(i.caller) && !consumers.containsElement(i.caller.bytes.toBase58String()) then
         throw("Only admin can call this function")
     else
         [BooleanEntry("is_dapp_active", false)]
