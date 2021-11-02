@@ -2,7 +2,7 @@
 {-# SCRIPT_TYPE ACCOUNT  #-}
 {-# CONTENT_TYPE DAPP    #-}
 
-let oracle = Address(base58'3NCNRgdSsFaF8y8V1ghhGiU5KoSBMhQbzJg') 
+let oracle = Address(base58'') # Need to filled
 
 let balance = oracle.getString("balance_address").valueOrErrorMessage("Empty key balance_address").addressFromStringValue()
 let SWOPgovernanceAdr = oracle.getString("swop_governance").valueOrErrorMessage("Empty key swop_governance").addressFromStringValue()
@@ -11,15 +11,17 @@ let consumers = oracle.getString("consumers").valueOrElse("Empty key consumer").
 let admin1 = oracle.getString("admin_1").valueOrElse("Empty key admin_1").addressFromStringValue()
 let admin2 = oracle.getString("admin_2").valueOrElse("Empty key admin_2").addressFromStringValue()
 let admin3 = oracle.getString("admin_3").valueOrElse("Empty key admin_3").addressFromStringValue()
+let admin4 = oracle.getString("admin_4").valueOrElse("Empty key admin_4").addressFromStringValue()
+let admin5 = oracle.getString("admin_5").valueOrElse("Empty key admin_5").addressFromStringValue()
 let isProtocolActive = oracle.getBoolean("is_protocol_active").valueOrErrorMessage("Empty key is_protocol_active")
 
 
 let keyOwner = "owner"
 let keyIsDappActive = "is_dapp_active"
 
-let owner = this.getString(keyOwner).valueOrErrorMessage("Empty keyOwner").addressFromString()
-let ownerStr = this.getString(keyOwner).valueOrErrorMessage("Empty keyOwner")
 let isDappActive = this.getBoolean(keyIsDappActive).valueOrErrorMessage("Empty key is_dapp_active")
+let ownerStr = this.getString(keyOwner).valueOrErrorMessage("Empty keyOwner")
+let owner = ownerStr.addressFromString()
 
 # START Part from 'https://github.com/swopfi/swopfi-smart-contracts/blob/master/dApps/SWOP/governance.ride'
 
@@ -58,6 +60,8 @@ func claimCalc(caller:Address) = {
     (userNewInterest, claimAmount)
 }
 
+# END Part from 'https://github.com/swopfi/swopfi-smart-contracts/blob/master/dApps/SWOP/governance.ride'
+
 @Callable(i)
 func init() = if !isProtocolActive then throw("Protol stopped by admin") else {
     if this.getString(keyOwner).isDefined() then throw("Automate already initialized") else
@@ -76,7 +80,7 @@ func init() = if !isProtocolActive then throw("Protol stopped by admin") else {
             StringEntry(keyOwner, i.caller.toString()),
             BooleanEntry(keyIsDappActive, true)
           ]
-  else throw("Incorrect paynemt. You should attach SWOP or empty payment")
+    else throw("Incorrect paymemt. You should attach SWOP or empty payment")
 }
 
 @Callable(i)
@@ -111,7 +115,7 @@ func governanceWithdraw(amtToWithdraw:Int)  =  if !(isProtocolActive && isDappAc
 
 @Callable(i)
 func shutdownDapp() = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
-    if ![admin1, admin2, admin3, owner].containsElement(i.caller) && !consumers.containsElement(i.caller.bytes.toBase58String()) then
+    if ![admin1, admin2, admin3, admin4, admin5, owner].containsElement(i.caller) && !consumers.containsElement(i.caller.bytes.toBase58String()) then
         throw("Only admin can call this function")
     else
         [BooleanEntry("is_dapp_active", false)]
@@ -122,5 +126,7 @@ func verify() = {
     let admin1Signed = if admin1.getBoolean(tx.id.toBase58String()).valueOrElse(false) then 1 else 0
     let admin2Signed = if admin2.getBoolean(tx.id.toBase58String()).valueOrElse(false) then 1 else 0
     let admin3Signed = if admin3.getBoolean(tx.id.toBase58String()).valueOrElse(false) then 1 else 0
-    admin1Signed + admin2Signed + admin3Signed >= 2
+    let admin4Signed = if admin4.getBoolean(tx.id.toBase58String()).valueOrElse(false) then 1 else 0
+    let admin5Signed = if admin5.getBoolean(tx.id.toBase58String()).valueOrElse(false) then 1 else 0
+    admin1Signed + admin2Signed + admin3Signed + admin4Signed + admin5Signed >= 3
 }
