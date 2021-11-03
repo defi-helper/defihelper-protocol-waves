@@ -42,11 +42,13 @@ pw_SWOPmy = pw.Asset(SWOP)
 
 moneySeed =  pw.Address(seed = "money seed for defihelper") # 3MvBuFJ8UaqdC8hmsZpZKm8xuiwnqBAKhB5
 
-try_ = "21"
+try_ = "22"
 
 admin1 = pw.Address(seed = "admin1_" + try_)
 admin2 = pw.Address(seed = "admin2_" + try_)
 admin3 = pw.Address(seed = "admin3_" + try_)
+admin3 = pw.Address(seed = "admin4_" + try_)
+admin3 = pw.Address(seed = "admin5_" + try_)
 user = pw.Address(seed = "user_" + try_)
 govarnanceDapp = pw.Address(seed = "govarnanceDapp_" + try_)
 balanceDapp = pw.Address(seed = "balanceDapp_" + try_)
@@ -59,6 +61,9 @@ SWOP_USDN_WAVES_pool = pw.Address(seed = "SWOP_USDN_WAVES_pool_" + try_)
 # print("admin1", admin1,"\n")
 # print("admin2", admin2,"\n")
 # print("admin3", admin3,"\n")
+# print("admin4", admin4,"\n")
+# print("admin5", admin5,"\n")
+
 
 # print("oracleDapp",oracleDapp,"\n")
 # print("balanceDapp",balanceDapp,"\n")
@@ -125,6 +130,16 @@ SWOP_USDN_WAVES_pool = pw.Address(seed = "SWOP_USDN_WAVES_pool_" + try_)
 #         'type':'string', 
 #         'key': 'admin_3', 
 #         'value': admin3.address
+#         },
+#         {
+#         'type':'string', 
+#         'key': 'admin_4', 
+#         'value': admin4.address
+#         },
+#         {
+#         'type':'string', 
+#         'key': 'admin_5', 
+#         'value': admin5.address
 #         },
 #         {
 #         'type':'integer', 
@@ -355,6 +370,19 @@ SWOP_USDN_WAVES_pool = pw.Address(seed = "SWOP_USDN_WAVES_pool_" + try_)
 # wait_for_resource_available(transfer["id"],1000)
 
 # data = admin2.dataTransaction([{
+#         'type':'boolean', 
+#         'key': 'txStr', 
+#         'value': True 
+#         }
+#         ])
+# print(data)
+# wait_for_resource_available(data["id"],1000)
+
+# transfer = moneySeed.sendWaves(admin3,int(10000000), txFee= 1400000)
+# print(transfer,"\n")
+# wait_for_resource_available(transfer["id"],1000)
+
+# data = admin3.dataTransaction([{
 #         'type':'boolean', 
 #         'key': 'txStr', 
 #         'value': True 
