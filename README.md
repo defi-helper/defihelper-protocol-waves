@@ -1,56 +1,60 @@
 # defi-helper-waves
 
-automate.ride, balance.ride и oracle.ride -- dApp-ы defi-helper
-swop_governance.ride -- обрезанный по функционалу контракт экоситсемы SWOP
-test_defihelper.py -- файл, который позволяет в скриптовом стиле посмотреть бизнес логику и проверить работоспособность контратков
+automate.ride, balance.ride and oracle.ride — defi-helper dApp-s
 
-#### Общая информация
-Все действия, требующие 2/3 подтверждений от админов, осуществляются через добавление в стейт аккаунта админов информации о транзакции
+swop_governance.ride — feature-reduced SWOP ecosystem contract
+
+test_defihelper.py — script that allows glance at business logic and checks the functionality
+
+#### General info
+All actions requiring 3/5 confirmation from admins are performed by adding data about the transaction to the admins' account state
 ```
 {
     'type':'boolean', 
-    'key': _txid_ # ключ с id транзакции в base58
+    'key': _txid_ # key with base58 transaction id  
     'value': True
 }
 ```
 
 ##### oracle.ride
-В этотом контракте хранится все осоновные переменные
+This contract stores all the main variables
 ```
-balance_address, type:string - base58 адрес balance контракта 
-swop_governance, type:string - base58 адрес swop_governance контракта 
-SWOP, type:string - base58 id токена SWOP 
-WAVES_USDN_pool, type:string - base58 адрес контракта экосистемы SWOP
-consumers, type:string - через запятую base58 адреса контрактов, обладающих правом взаимоедйтсвововать с автомейтами 
-admin_1, type:string - base58 адрес админа
-admin_2, type:string - base58 адрес админа
-admin_3, type:string - base58 адрес админа
-protocol_fee_in_usdn, type:integer - комиссия протокола в копейках USDN
-is_protocol_active, type:boolean - если не true, методы контрактов экосистемы defi-helper
+balance_address, type:string - base58 balance contract  
+swop_governance, type:string - base58 swop_governance contract 
+SWOP, type:string - base58 SWOP token id 
+WAVES_USDN_pool, type:string - base58 SWOP ecosystem contract address
+consumers, type:string - comma-separated base58 addresses that have the right to interact with automates
+admin_1, type:string - base58 admin1
+admin_2, type:string - base58 admin2
+admin_3, type:string - base58 admin3
+admin_4, type:string - base58 admin4
+admin_5, type:string - base58 admin5
+protocol_fee_in_usdn, type:integer - USDN protocol commission
+is_protocol_active, type:boolean - if not true, defi-helper ecosystem contract methods are inactive
 ```
-Пример можно увидеть в test_defihelper.py
+You can see an example in test_defihelper.py
 
 ##### balance.ride
 
-Вызываемые методы:
+Called methods:
 
-- init() -- вызывается один раз. Создаёт запись для общего баланса и активирует  is_dapp_active == true
-- updateAutomateStatus(automate: String, status: Boolean) -- добавление automate в whitelist. Необходимо, чтобы автомейт самостоятельно списывал комиссию с balance
-- extractFee(user: String, isFeeExtract: Boolean) -- метод, вызываемый automate-ом, при списываении комиссии
-- replenishBalance(userToReplenish: String) -- пополнение баланса в WAVES для userToReplenish
-- withdraw(withdrawAmt: Int) -- вывод средств пользователем с баланса 
-- incomeProtocolWithdraw(addresForSendingIncome : String) -- вывод дохода протокола. Требует 2/3 одобрения от админов
-- shutdownDapp() -- остановка контракта. Доступно consumer, admins 
-- @Verifier(tx) -- все отправляемые транзакции требут 2/3 одобрения от админов
+- init() - сalled once. Creates an entry for total balance and activates is_dapp_active == true
+- updateAutomateStatus(automate: String, status: Boolean) - adding automate to the whitelist. It is necessary for the automate to deduct the commission from the balance
+- extractFee(user: String, isFeeExtract: Boolean) - method called by automate for debiting the commission
+- replenishBalance(userToReplenish: String) - balance replenishment in WAVES for userToReplenish
+- withdraw(withdrawAmt: Int) - user withdrawal from the balance  
+- incomeProtocolWithdraw(addresForSendingIncome : String) - protocol income output. Requires 3/5 approval from admins
+- shutdownDapp() - contract stop. Available for consumers and admins 
+- @Verifier(tx) -  all transactions sent from contract require 3/5 approval from admins
 
 ##### automate.ride
 
-Вызываемые методы:
+Called methods:
 
-- init() -- вызывается пользователем. Записывает в стейт адрес владельца и активирует  is_dapp_active == true
-- governanceLockSWOP() -- принимает платёж в SWOP. Вызывает lockSWOP() на governance контракте экосистемы Swop
-- governanceClaimAndStake(minSWOPreward: Int) -- Клейм и рестейк средств. Возможен вызов consumer и пользователем. При вызове от имени consumer взымается комиссия протокола  protocol_fee_in_usdn и 0.005 WAVES с баланса пользователя в balance
-- governanceWithdraw(amtToWithdraw:Int) -- вывод SWOP из экоситсемы Swop. Доступно толко пользователю
-- shutdownDapp() -- остановка контракта. Доступно consumer, admins и owner(пользователь)
-- @Verifier(tx) -- все отправляемые транзакции требут 2/3 одобрения от админов
+- init() - called by user. Writes owner's address to the state and activates is_dapp_active == true
+- governanceLockSWOP() - accepts payment in SWOP. Calls lockSWOP() on the Swop ecosystem contract
+- governanceClaimAndStake(minSWOPreward: Int) - Claim and restake SWOP. It is possible to call for consumer and user. When calling  by consumer, protocol_fee_in_usdn and 0.005 WAVES are charged from user in balance dApp
+- governanceWithdraw(amtToWithdraw:Int) - output SWOP from the Swop ecosystem. Available only to the user
+- shutdownDapp() - contract stop. Available for consumer, admins and owner(user)
+- @Verifier(tx) -  all transactions sent from contract require 3/5 approval from admins
 
