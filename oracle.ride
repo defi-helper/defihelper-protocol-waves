@@ -1,0 +1,19 @@
+{-# STDLIB_VERSION 5     #-}
+{-# SCRIPT_TYPE ACCOUNT  #-}
+{-# CONTENT_TYPE DAPP    #-}
+
+let admin1 = this.getString("admin_1").valueOrElse("Empty key admin_1").addressFromStringValue()
+let admin2 = this.getString("admin_2").valueOrElse("Empty key admin_2").addressFromStringValue()
+let admin3 = this.getString("admin_3").valueOrElse("Empty key admin_3").addressFromStringValue()
+let admin4 = this.getString("admin_4").valueOrElse("Empty key admin_4").addressFromStringValue()
+let admin5 = this.getString("admin_5").valueOrElse("Empty key admin_5").addressFromStringValue()
+
+@Verifier(tx)
+func verify() = {
+    let admin1Signed = if admin1.getBoolean(tx.id.toBase58String()).valueOrElse(false) then 1 else 0
+    let admin2Signed = if admin2.getBoolean(tx.id.toBase58String()).valueOrElse(false) then 1 else 0
+    let admin3Signed = if admin3.getBoolean(tx.id.toBase58String()).valueOrElse(false) then 1 else 0
+    let admin4Signed = if admin4.getBoolean(tx.id.toBase58String()).valueOrElse(false) then 1 else 0
+    let admin5Signed = if admin5.getBoolean(tx.id.toBase58String()).valueOrElse(false) then 1 else 0
+    admin1Signed + admin2Signed + admin3Signed + admin4Signed + admin5Signed >= 3
+}
