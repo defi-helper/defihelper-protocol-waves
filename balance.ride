@@ -59,14 +59,14 @@ func init()  = {
 }
 
 @Callable(i)
-func extractFee(isFeeExtract: Boolean) = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
+func extractFee() = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
     let user = i.caller.getString(keyAutomateOwner).valueOrErrorMessage("Empty keyOwner")
     let originCallerAdr = i.originCaller.toString()
-    let isConsumerCall = consumers.containsElement(originCallerAdr).valueOrErrorMessage("Empty key: consumers") || originCallerAdr == user
+    let isConsumerCall = consumers.containsElement(originCallerAdr).valueOrErrorMessage("Empty key: consumers")
     if !isConsumerCall then
-        throw(originCallerAdr + " is not a consumer or user")
+        throw(originCallerAdr + " is not a consumer")
     else
-        let protocolFee = if isFeeExtract then calcWavesProtocolFee() else 0
+        let protocolFee = calcWavesProtocolFee()
         let userBalance = getUserBalance(user)
         let newUserBalance = userBalance - protocolFee
         let newOrverallBalance = orverallBalance - protocolFee 
