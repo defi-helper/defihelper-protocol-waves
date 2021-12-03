@@ -15,6 +15,7 @@ let admin5 = oracle.getString("admin_5").valueOrElse("Empty key admin_5").addres
 let feeInUSDN = oracle.getInteger("protocol_fee_in_usdn").valueOrErrorMessage("Empty protocol_fee_in_usdn")
 let isProtocolActive = oracle.getBoolean("is_protocol_active").valueOrErrorMessage("Empty key is_protocol_active")
 
+let keyAutomateOwner = "owner"
 let keyBalance = "_balance"
 let keyIsDappActive = "is_dapp_active"
 let keyOverallBalance = "overall_balance"
@@ -58,18 +59,12 @@ func init()  = {
 }
 
 @Callable(i)
-func updateAutomateStatus(automate: String, status: Boolean)  = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
-    if !consumers.containsElement(i.caller.bytes.toBase58String()) then
-        throw("Only admin can call this function")
-    else
-        [BooleanEntry(automate, status)]
-}
-
-@Callable(i)
-func extractFee(user: String, isFeeExtract: Boolean) = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
-    let isAutomateActive = this.getBoolean(i.caller.toString()).valueOrErrorMessage("Empty key i.caller: " + i.caller.toString())
-    if !isAutomateActive then
-        throw("This automate is inactive")
+func extractFee(isFeeExtract: Boolean) = if !(isProtocolActive && isDappActive) then throw("Protol stopped by admin") else {
+    let user = i.caller.getString(keyAutomateOwner).valueOrErrorMessage("Empty keyOwner")
+    let originCallerAdr = i.originCaller.toString()
+    let isConsumerCall = consumers.containsElement(originCallerAdr).valueOrErrorMessage("Empty key: consumers") || originCallerAdr == user
+    if !isConsumerCall then
+        throw(originCallerAdr + " is not a consumer or user")
     else
         let protocolFee = if isFeeExtract then calcWavesProtocolFee() else 0
         let userBalance = getUserBalance(user)
@@ -110,7 +105,8 @@ func withdraw(withdrawAmt: Int) = if !(isProtocolActive && isDappActive) then th
         [
             IntegerEntry(callerStr + keyBalance, newCallerBalance),
             IntegerEntry(keyOverallBalance, newOrverallBalance),
-            ScriptTransfer(i.caller, withdrawAmt, unit)        ]
+            ScriptTransfer(i.caller, withdrawAmt, unit)       
+        ]
 }
 
 @Callable(i)
