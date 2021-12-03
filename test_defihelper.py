@@ -36,34 +36,22 @@ SWOP = "Ccgesc9iWMSg1f8CqFP5nZwgF6xsGirReDhpvNp1JAWW"
 
 pw_SWOPmy = pw.Asset(SWOP)
 
-# govarnanceDapp = pw.Address(seed = str(random.randint(1,10000000000000)))
-# bapaneDapp = pw.Address(seed = str(random.randint(1,10000000000000)))
-# automateDapp = pw.Address(seed = str(random.randint(1,10000000000000)))
 
 moneySeed =  pw.Address(seed = "money seed for defihelper") # 3MvBuFJ8UaqdC8hmsZpZKm8xuiwnqBAKhB5
 
-try_ = "22"
+try_ = "28"
 
 admin1 = pw.Address(seed = "admin1_" + try_)
 admin2 = pw.Address(seed = "admin2_" + try_)
 admin3 = pw.Address(seed = "admin3_" + try_)
-admin3 = pw.Address(seed = "admin4_" + try_)
-admin3 = pw.Address(seed = "admin5_" + try_)
+admin4 = pw.Address(seed = "admin4_" + try_)
+admin5 = pw.Address(seed = "admin5_" + try_)
 user = pw.Address(seed = "user_" + try_)
 govarnanceDapp = pw.Address(seed = "govarnanceDapp_" + try_)
 balanceDapp = pw.Address(seed = "balanceDapp_" + try_)
 automateDapp = pw.Address(seed = "automateDapp_" + try_)
 oracleDapp = pw.Address(seed = "oracleDapp_" + try_)
 SWOP_USDN_WAVES_pool = pw.Address(seed = "SWOP_USDN_WAVES_pool_" + try_)
-
-# print("moneySeed", moneySeed,"\n")
-
-# print("admin1", admin1,"\n")
-# print("admin2", admin2,"\n")
-# print("admin3", admin3,"\n")
-# print("admin4", admin4,"\n")
-# print("admin5", admin5,"\n")
-
 
 # print("oracleDapp",oracleDapp,"\n")
 # print("balanceDapp",balanceDapp,"\n")
@@ -72,12 +60,21 @@ SWOP_USDN_WAVES_pool = pw.Address(seed = "SWOP_USDN_WAVES_pool_" + try_)
 # print("govarnanceDapp", govarnanceDapp,"\n")
 # print("SWOP_USDN_WAVES_pool",SWOP_USDN_WAVES_pool,"\n")
 
+# print("moneySeed", moneySeed,"\n")
+# print("admin1", admin1,"\n")
+# print("admin2", admin2,"\n")
+# print("admin3", admin3,"\n")
+# print("admin4", admin4,"\n")
+# print("admin5", admin5,"\n")
+
 
 # 0 _prepare_ 
 ## a) Увеличим инремент try_, если мы осуществляем прогон с нуля 
-## b) !Укажем адрес oracle в automate и balance! 
+## b) !Укажем адрес oracle в automate и balance! Для этого принтанём адрес оракла 
 ## c) Создадим SWOP. После этого обновим перенную, заменим это поле в governance контракте
 ## 
+
+# print("oracleDapp",oracleDapp,"\n")
 
 # print(moneySeed.issueAsset(name = "SWOPmy",
 #                                 description = "SWOPmy",
@@ -226,7 +223,6 @@ SWOP_USDN_WAVES_pool = pw.Address(seed = "SWOP_USDN_WAVES_pool_" + try_)
 # print(withdraw,"\n")
 # wait_for_resource_available(withdraw["id"], 100)
 
-
 # _6_
 ## Создадим псевдообменик, записав туда поля. Из них будем вычислять стоимость количество Waves, эквивалентного 1$
 
@@ -247,39 +243,29 @@ SWOP_USDN_WAVES_pool = pw.Address(seed = "SWOP_USDN_WAVES_pool_" + try_)
 # wait_for_resource_available(data["id"],1000)
 # print(data)
 
-
 # _7_
-## Развернём автомейт, проиницилизируем его, добавим в вайт лист
+## Развернём автомейт
 
 # transfer = user.sendWaves(automateDapp,int(10000000), txFee= 1400000)
 # print(transfer,"\n")
 # wait_for_resource_available(transfer["id"],1000)
 
+# data = automateDapp.dataTransaction([{
+#         'type':'string', 
+#         'key': 'owner', 
+#         'value': user.address
+#         },
+#         {
+#         'type':'boolean', 
+#         'key': 'is_dapp_active', 
+#         'value': True
+#         }])
+# wait_for_resource_available(data["id"],1000)
+# print(data)
+
 # setScript = automateDapp.setScript(automate_script,txFee=1400000)
 # print(setScript,"\n")
 # wait_for_resource_available(setScript["id"],1000)
-
-# initAutomate = user.invokeScript(automateDapp.address,
-#                                     "init",
-#                                     [],
-#                                     [],
-#                                     txFee=int(1e8*0.005)
-#                                 )
-# print(initAutomate,"\n")
-# wait_for_resource_available(initAutomate["id"], 100)
-
-# addAutomate = moneySeed.invokeScript(balanceDapp.address,
-#                                     "updateAutomateStatus",
-#                                     [
-#                                         {"type": "string", "value": automateDapp.address},
-#                                         {"type": "boolean", "value": True},
-#                                         ],
-#                                     [],
-#                                     txFee=int(1e8*0.005)
-#                                 )
-# print(addAutomate,"\n")
-# wait_for_resource_available(addAutomate["id"], 100)
-
 
 # _8_
 ## Залочим SWOP через автомейт, получим инкам, рестейкнем от имени user
@@ -298,7 +284,6 @@ SWOP_USDN_WAVES_pool = pw.Address(seed = "SWOP_USDN_WAVES_pool_" + try_)
 # claimAndStake = user.invokeScript(automateDapp.address, "governanceClaimAndStake", [{"type": "integer", "value": 100000000}], [], txFee=int(1e8*0.005))
 # print(claimAndStake,"\n")
 # wait_for_resource_available(claimAndStake["id"], 100)
-
 
 # _9_
 ## Получим инкам, рестейкнем от имени defihelperManager
@@ -326,7 +311,7 @@ SWOP_USDN_WAVES_pool = pw.Address(seed = "SWOP_USDN_WAVES_pool_" + try_)
 
 
 # _11_
-## defihelperManager выводит SWOP через автомейт
+## defihelperManager выводит SWOP через автомейт. Убедимся, что он не имеет на это прав
 
 # withdraw = moneySeed.invokeScript(automateDapp.address, "governanceWithdraw", [{"type": "integer", "value": 399999999}], [], txFee=int(1e8*0.005))
 # print(withdraw,"\n")
@@ -348,55 +333,7 @@ SWOP_USDN_WAVES_pool = pw.Address(seed = "SWOP_USDN_WAVES_pool_" + try_)
 # print(incomeProtocolWithdraw,"\n")
 # wait_for_resource_available(incomeProtocolWithdraw["id"], 100)
 
-
-# _14_
-## Вывод дохода defihelper. Одобрим тразнакцию первым и вторым амдином. В верифаере используется фейковые id транзакции "txStr" 
-
-# transfer = moneySeed.sendWaves(admin1,int(10000000), txFee= 1400000)
-# print(transfer,"\n")
-# wait_for_resource_available(transfer["id"],1000)
-
-# data = admin1.dataTransaction([{
-#         'type':'boolean', 
-#         'key': 'txStr', 
-#         'value': True 
-#         }
-#         ])
-# print(data)
-# wait_for_resource_available(data["id"],1000)
-
-# transfer = moneySeed.sendWaves(admin2,int(10000000), txFee= 1400000)
-# print(transfer,"\n")
-# wait_for_resource_available(transfer["id"],1000)
-
-# data = admin2.dataTransaction([{
-#         'type':'boolean', 
-#         'key': 'txStr', 
-#         'value': True 
-#         }
-#         ])
-# print(data)
-# wait_for_resource_available(data["id"],1000)
-
-# transfer = moneySeed.sendWaves(admin3,int(10000000), txFee= 1400000)
-# print(transfer,"\n")
-# wait_for_resource_available(transfer["id"],1000)
-
-# data = admin3.dataTransaction([{
-#         'type':'boolean', 
-#         'key': 'txStr', 
-#         'value': True 
-#         }
-#         ])
-# print(data)
-# wait_for_resource_available(data["id"],1000)
-
-# incomeProtocolWithdraw = moneySeed.invokeScript(balanceDapp.address, "incomeProtocolWithdraw", [{"type": "string", "value": admin1.address}], [], txFee=int(1e8*0.005))
-# print(incomeProtocolWithdraw,"\n")
-# wait_for_resource_available(incomeProtocolWithdraw["id"], 100)
-
-
-# _15_ 
+# _14_ 
 # shutdown dApp
 
 # shutdown = moneySeed.invokeScript(balanceDapp.address, "shutdownDapp", [], [], txFee=int(1e8*0.005))
