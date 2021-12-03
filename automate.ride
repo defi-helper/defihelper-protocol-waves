@@ -2,7 +2,7 @@
 {-# SCRIPT_TYPE ACCOUNT  #-}
 {-# CONTENT_TYPE DAPP    #-}
 
-let oracle = Address(base58'') # Need to filled
+let oracle = Address(base58'3N526E1MCwh16C5c6TA3YD58ofLwrLyVw9M') # Need to filled
 
 let balance = oracle.getString("balance_address").valueOrErrorMessage("Empty key balance_address").addressFromStringValue()
 let SWOPgovernanceAdr = oracle.getString("swop_governance").valueOrErrorMessage("Empty key swop_governance").addressFromStringValue()
@@ -76,9 +76,13 @@ func governanceClaimAndStake(minSWOPreward: Int) =  if !(isProtocolActive && isD
     let claimAmount = claimCalc(this)._2
     if (claimAmount < minSWOPreward) then throw("Amount to claim is less than minSWOPreward") else
     let isFeeExtract = if i.caller == owner then false else true
-    strict z = invoke(SWOPgovernanceAdr, "claimAndStakeSWOP", [], [])
-    strict y = invoke(balance, "extractFee", [isFeeExtract], [])
-    []
+    if isFeeExtract then 
+        strict z = invoke(SWOPgovernanceAdr, "claimAndStakeSWOP", [], [])
+        strict y = invoke(balance, "extractFee", [], [])
+        []
+    else 
+        strict z = invoke(SWOPgovernanceAdr, "claimAndStakeSWOP", [], [])
+        []
 }
 
 @Callable(i)
